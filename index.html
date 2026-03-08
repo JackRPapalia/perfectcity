@@ -247,18 +247,28 @@ var PETAL_N = 6;
 var INNER_R = 22;
 var DAM_X = -105;
 
-// Ground
-var gm = new THREE.Mesh(new THREE.CircleGeometry(CITY_R + 20, 128), MAT.ground);
-gm.rotation.x = -Math.PI / 2;
+// Ground — thick disc with a rectangular river-channel slot punched through it
+var groundShape = new THREE.Shape();
+groundShape.absarc(0, 0, CITY_R + 20, 0, Math.PI * 2, false); // outer city circle
+var riverSlot = new THREE.Path();                               // river hole
+riverSlot.moveTo(-130, -RIVER_W);
+riverSlot.lineTo( 130, -RIVER_W);
+riverSlot.lineTo( 130,  RIVER_W);
+riverSlot.lineTo(-130,  RIVER_W);
+riverSlot.closePath();
+groundShape.holes.push(riverSlot);
+var gm = new THREE.Mesh(
+  new THREE.ExtrudeGeometry(groundShape, { depth: 4, bevelEnabled: false, curveSegments: 128 }),
+  MAT.ground
+);
+gm.rotation.x = Math.PI / 2;  // shape XY → world XZ, extrusion goes down (-Y)
 gm.receiveShadow = true;
 G.base.add(gm);
 
-// River
-mkBox(260, 0.4, RIVER_W * 2, MAT.water, 0, 0, 0, 0, G.water, 'The Vela River\nWidth: ~180m\nCentral waterway');
-mkBox(260, 0.18, 8, MAT.wetland, 0, 0.12, -(RIVER_W + 4), 0, G.green, 'North Wetland Restoration\nReed beds + native aquatics\nStormwater filtration');
-mkBox(260, 0.18, 8, MAT.wetland, 0, 0.12, (RIVER_W + 4), 0, G.green, 'South Wetland Restoration\nReed beds + native aquatics\nStormwater filtration');
-mkBox(250, 0.15, 5, MAT.pedestrian, 0, 0.16, -(RIVER_W + 11), 0, G.base, 'North Riverside Promenade\n18m wide pedestrian boulevard\nBike lane + tram stop every 400m');
-mkBox(250, 0.15, 5, MAT.pedestrian, 0, 0.16, (RIVER_W + 11), 0, G.base, 'South Riverside Promenade\n18m wide pedestrian boulevard\nBike lane + tram stop every 400m');
+// River — water surface level with ground (ground top = y 0, water top = y 0)
+mkBox(260, 2, RIVER_W * 2, MAT.water, 0, -0.9, 0, 0, G.water, 'The Vela River\nWidth: ~180m\nCentral waterway');
+mkBox(250, 0.15, 5, MAT.pedestrian, 0, 0, -(RIVER_W + 11), 0, G.base, 'North Riverside Promenade\n18m wide pedestrian boulevard\nBike lane + tram stop every 400m');
+mkBox(250, 0.15, 5, MAT.pedestrian, 0, 0, (RIVER_W + 11), 0, G.base, 'South Riverside Promenade\n18m wide pedestrian boulevard\nBike lane + tram stop every 400m');
 
 // Pedestrian Bridges
 var bridgeXs = [-80, -55, -30, -5, 20, 45, 70, 95];
@@ -281,7 +291,7 @@ for (var bi = 0; bi < bridgeXs.length; bi++) {
   var chordW = 1.9;             // hex ring chord width
   var roadH  = 0.08;            // height — keep roads flat
   var roadY  = 0.09;            // just above ground
-  var jGap   = 1.3;             // gap on each side of a junction (avoids z-fighting)
+  var jGap   = 2.4;             // gap on each side of a junction — must equal traffic circle diskR
   var RW     = RIVER_W + 0.6;   // river avoidance half-width (with buffer)
 
   // Clip segment (x1,z1)→(x2,z2) to the portions where |z| >= RW.
@@ -319,45 +329,95 @@ for (var bi = 0; bi < bridgeXs.length; bi++) {
 
   // Six inter-petal spoke angles: 30, 90, 150, 210, 270, 330 degrees
   var spokes   = [1, 3, 5, 7, 9, 11].map(function(n) { return n * Math.PI / 6; });
-  var hexRings = [44, 68, 92];           // ring radii
-  var outerR   = CITY_R - 4;            // city edge
+  var hexRings = [44, 68, 92];           // inner hex polygon ring radii
+  var allRings = hexRings.concat([CITY_R]); // all rings that need spoke gaps
 
-  // --- Radial spokes, broken into segments between ring radii ---
-  // Gaps are left at each hex-ring junction so the chord road sits on top.
+  // --- Radial spokes, broken into segments between every ring ---
+  // Gaps at every ring junction (hex rings + outer perimeter) so roads sit cleanly.
   spokes.forEach(function(a) {
-    var breaks = [INNER_R].concat(hexRings).concat([outerR]);
+    var breaks = [INNER_R].concat(hexRings).concat([CITY_R]);
     for (var i = 0; i < breaks.length - 1; i++) {
       var r1 = breaks[i],  r2 = breaks[i + 1];
-      // Leave a gap where a hex ring sits (not at the city-edge endpoints)
-      var s1 = r1 + (hexRings.indexOf(r1) >= 0 ? jGap : 0);
-      var s2 = r2 - (hexRings.indexOf(r2) >= 0 ? jGap : 0);
+      var s1 = r1 + (allRings.indexOf(r1) >= 0 ? jGap : 0);
+      var s2 = r2 - (allRings.indexOf(r2) >= 0 ? jGap : 0);
       if (s2 <= s1 + 0.5) continue;
       mkRoad(Math.cos(a) * s1, Math.sin(a) * s1,
              Math.cos(a) * s2, Math.sin(a) * s2, roadW);
     }
   });
 
-  // --- Hexagonal ring roads (straight chords connecting adjacent spoke tips) ---
-  // Each chord is trimmed by jGap at both ends so it sits cleanly between spokes.
-  // The riverClip inside mkRoad automatically splits any chord that crosses the river.
+  // --- Inner hexagonal ring roads (straight chords between adjacent spoke tips) ---
   hexRings.forEach(function(R) {
     spokes.forEach(function(a1) {
-      var a2 = a1 + Math.PI / 3;               // next spoke, always 60° ahead
+      var a2 = a1 + Math.PI / 3;
       var ax = Math.cos(a1) * R, az = Math.sin(a1) * R;
       var bx = Math.cos(a2) * R, bz = Math.sin(a2) * R;
       var dx = bx - ax, dz = bz - az;
       var len = Math.sqrt(dx * dx + dz * dz);
-      var nx = dx / len, nz = dz / len;        // unit direction A→B
+      var nx = dx / len, nz = dz / len;
       mkRoad(ax + nx * jGap, az + nz * jGap,
              bx - nx * jGap, bz - nz * jGap, chordW);
+    });
+  });
+
+  // --- Outer perimeter road — polygon approximating the city circle at CITY_R ---
+  // 12 short flat rectangular segments per 60° arc between adjacent spokes.
+  // Segment endpoints follow the circle, so the road visually conforms to the edge.
+  // jGap is trimmed at each spoke end; riverClip handles the river gap automatically.
+  var arcSegs = 12;
+  spokes.forEach(function(a1) {
+    var a2 = a1 + Math.PI / 3;
+    for (var i = 0; i < arcSegs; i++) {
+      var t1 = i / arcSegs,  t2 = (i + 1) / arcSegs;
+      var aS = a1 + t1 * (a2 - a1),  aE = a1 + t2 * (a2 - a1);
+      var ax = Math.cos(aS) * CITY_R, az = Math.sin(aS) * CITY_R;
+      var bx = Math.cos(aE) * CITY_R, bz = Math.sin(aE) * CITY_R;
+      var dx = bx - ax, dz = bz - az;
+      var sLen = Math.sqrt(dx * dx + dz * dz);
+      var nx = dx / sLen, nz = dz / sLen;
+      var trimA = (i === 0)          ? jGap : 0;
+      var trimB = (i === arcSegs-1)  ? jGap : 0;
+      mkRoad(ax + nx * trimA, az + nz * trimA,
+             bx - nx * trimB, bz - nz * trimB, chordW);
+    }
+  });
+})();
+
+// Traffic circles at every spoke × hex-ring intersection (6 spokes × 3 rings = 18)
+(function() {
+  var diskMat = new THREE.MeshLambertMaterial({ color: 0x2e2e3e });
+  var spokes   = [1, 3, 5, 7, 9, 11].map(function(n) { return n * Math.PI / 6; });
+  var rings    = [44, 68, 92, CITY_R];
+
+  // diskR must match jGap in road IIFE — roads stop at diskR, circle fills the gap exactly
+  var diskR   = 2.4;
+  var diskGeo = new THREE.CylinderGeometry(diskR, diskR, 0.06, 40);
+  var isleGeo = new THREE.CylinderGeometry(1.1, 1.1, 0.14, 32);
+
+  spokes.forEach(function(a) {
+    rings.forEach(function(R) {
+      var cx = Math.cos(a) * R;
+      var cz = Math.sin(a) * R;
+
+      // Roundabout road surface — raised 0.04 above roads (roadY=0.09) to prevent Z-fighting
+      var disk = new THREE.Mesh(diskGeo, diskMat);
+      disk.position.set(cx, 0.13, cz);
+      disk.receiveShadow = true;
+      scene.add(disk);
+
+      // Raised grass center island
+      var isle = new THREE.Mesh(isleGeo, MAT.grass);
+      isle.position.set(cx, 0.20, cz);
+      isle.castShadow = true;
+      scene.add(isle);
     });
   });
 })();
 
 // Bridge ramps
 (function() {
-  var rampTopY  = 1.4;                                          // bridge deck top (y=1.0 + h/2=0.4)
-  var rampGndY  = 0.235;                                        // promenade top (y=0.16 + h/2=0.075)
+  var rampTopY  = 1.3;                                          // bridge deck top (y=1.0 + h/2=0.4)
+  var rampGndY  = 0;                                        // promenade top (y=0.16 + h/2=0.075)
   var rampNearZ = RIVER_W * 1.2;                                // bridge end edge
   var rampFarZ  = RIVER_W + 8.5;                                // promenade inner edge
   var rampHLen  = rampFarZ - rampNearZ;                         // horizontal span
