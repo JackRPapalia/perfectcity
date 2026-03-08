@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Fleur — Landlocked European City</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0a0f1a; font-family: 'Georgia', serif; overflow: hidden; }
+  #canvas { display: block; }
+  #title-card {
+    position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+    text-align: center; pointer-events: none;
+  }
+  #title-card h1 { font-size: 2.2rem; letter-spacing: 0.3em; color: #e8d5a3; font-weight: 300; text-shadow: 0 0 30px rgba(232,213,163,0.4); }
+  #title-card p { font-size: 0.7rem; letter-spacing: 0.25em; color: #7a9e8a; text-transform: uppercase; margin-top: 4px; }
+  #legend {
+    position: fixed; bottom: 20px; left: 20px;
+    background: rgba(8,12,22,0.88); border: 1px solid rgba(232,213,163,0.18);
+    border-radius: 8px; padding: 14px 18px; max-width: 210px;
+  }
+  #legend h3 { color: #e8d5a3; font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 9px; }
+  .li { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+  .ld { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+  .ll { font-size: 0.65rem; color: #b0c4b8; }
+  #controls {
+    position: fixed; bottom: 20px; right: 20px;
+    background: rgba(8,12,22,0.88); border: 1px solid rgba(232,213,163,0.18);
+    border-radius: 8px; padding: 14px 18px;
+  }
+  #controls p { font-size: 0.6rem; color: #7a9e8a; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 7px; }
+  .ctrl { font-size: 0.62rem; color: #b0c4b8; margin-bottom: 3px; }
+  #layers {
+    position: fixed; top: 90px; right: 20px;
+    background: rgba(8,12,22,0.88); border: 1px solid rgba(232,213,163,0.18);
+    border-radius: 8px; padding: 14px 18px;
+  }
+  #layers h3 { color: #e8d5a3; font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 9px; }
+  .lbtn {
+    display: block; width: 100%; text-align: left;
+    background: transparent; border: 1px solid rgba(255,255,255,0.1);
+    color: #b0c4b8; font-size: 0.62rem; letter-spacing: 0.1em;
+    text-transform: uppercase; padding: 5px 9px; margin-bottom: 4px;
+    cursor: pointer; border-radius: 4px; transition: all 0.2s;
+  }
+  .lbtn:hover { border-color: rgba(232,213,163,0.35); color: #e8d5a3; }
+  .lbtn.on { background: rgba(122,158,138,0.18); border-color: #7a9e8a; color: #7a9e8a; }
+  #stats {
+    position: fixed; top: 90px; left: 20px;
+    background: rgba(8,12,22,0.88); border: 1px solid rgba(232,213,163,0.18);
+    border-radius: 8px; padding: 14px 18px; min-width: 185px;
+  }
+  #stats h3 { color: #e8d5a3; font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 9px; }
+  .stat { font-size: 0.65rem; color: #b0c4b8; margin-bottom: 4px; }
+  .stat span { color: #e8d5a3; }
+  #tip {
+    position: fixed; pointer-events: none; display: none;
+    background: rgba(8,12,22,0.95); border: 1px solid rgba(232,213,163,0.35);
+    border-radius: 6px; padding: 9px 13px;
+    color: #e8d5a3; font-size: 0.72rem; line-height: 1.55; max-width: 190px;
+  }
+</style>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+
+<div id="title-card">
+  <h1>FLEUR</h1>
+  <p>Landlocked Europe &nbsp;·&nbsp; 150 sq mi &nbsp;·&nbsp; Pop. 4,000,000</p>
+</div>
+
+<div id="stats">
+  <h3>City Data</h3>
+  <div class="stat">Area: <span>150 sq miles</span></div>
+  <div class="stat">Population: <span>4,000,000</span></div>
+  <div class="stat">Density: <span>~26,600/sq mi</span></div>
+  <div class="stat">Green Space: <span>40%</span></div>
+  <div class="stat">Transit Stations: <span>48</span></div>
+  <div class="stat">Coverage: <span>600m radius each</span></div>
+  <div class="stat">Max Speed: <span>30 km/h urban</span></div>
+  <div class="stat">River: <span>Vela (~180m wide)</span></div>
+  <div class="stat">Solar: <span>~2.4 GW capacity</span></div>
+  <div class="stat">Hydroelectric: <span>~320 MW</span></div>
+</div>
+
+<div id="legend">
+  <h3>Legend</h3>
+  <div class="li"><div class="ld" style="background:#1a5a7a"></div><div class="ll">River and Water</div></div>
+  <div class="li"><div class="ld" style="background:#3d8b5e"></div><div class="ll">Parks and Green Space</div></div>
+  <div class="li"><div class="ld" style="background:#2a5a30"></div><div class="ll">Urban Forest</div></div>
+  <div class="li"><div class="ld" style="background:#4a7c45"></div><div class="ll">Wetlands</div></div>
+  <div class="li"><div class="ld" style="background:#7ab840"></div><div class="ll">Community Gardens</div></div>
+  <div class="li"><div class="ld" style="background:#b8895a"></div><div class="ll">Brownstones</div></div>
+  <div class="li"><div class="ld" style="background:#7ab3c4"></div><div class="ll">Apartment Towers</div></div>
+  <div class="li"><div class="ld" style="background:#2d6e4a"></div><div class="ll">Vertical Garden Core</div></div>
+  <div class="li"><div class="ld" style="background:#d4a853"></div><div class="ll">Transit Stations</div></div>
+  <div class="li"><div class="ld" style="background:#7a6a5a"></div><div class="ll">Hydroelectric Dam</div></div>
+  <div class="li"><div class="ld" style="background:#2244aa"></div><div class="ll">Solar Arrays</div></div>
+  <div class="li"><div class="ld" style="background:#e8d5a3"></div><div class="ll">Pedestrian Promenades</div></div>
+</div>
+
+<div id="layers">
+  <h3>Layers</h3>
+  <button class="lbtn on" id="btn-green">Green Space</button>
+  <button class="lbtn on" id="btn-transit">Transit</button>
+  <button class="lbtn on" id="btn-buildings">Buildings</button>
+  <button class="lbtn on" id="btn-water">Water</button>
+  <button class="lbtn on" id="btn-solar">Solar</button>
+</div>
+
+<div id="controls">
+  <p>Navigation</p>
+  <div class="ctrl">Drag: Orbit</div>
+  <div class="ctrl">Scroll: Zoom</div>
+  <div class="ctrl">Right-drag: Pan</div>
+  <div class="ctrl">Hover: Inspect</div>
+</div>
+
+<div id="tip"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+var W = window.innerWidth, H = window.innerHeight;
+var canvas = document.getElementById('canvas');
+var renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
+renderer.setSize(W, H);
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.15;
+
+var scene = new THREE.Scene();
+scene.background = new THREE.Color(0x08101e);
+scene.fog = new THREE.FogExp2(0x08101e, 0.005);
+
+var camera = new THREE.PerspectiveCamera(48, W/H, 0.5, 2000);
+camera.position.set(0, 140, 210);
+camera.lookAt(0, 0, 0);
+
+// Lighting
+scene.add(new THREE.AmbientLight(0x334466, 0.7));
+var sun = new THREE.DirectionalLight(0xfff5e0, 2.8);
+sun.position.set(80, 160, 60);
+sun.castShadow = true;
+sun.shadow.mapSize.width = 2048;
+sun.shadow.mapSize.height = 2048;
+sun.shadow.camera.near = 1;
+sun.shadow.camera.far = 500;
+sun.shadow.camera.left = -180;
+sun.shadow.camera.right = 180;
+sun.shadow.camera.top = 180;
+sun.shadow.camera.bottom = -180;
+scene.add(sun);
+var fill = new THREE.DirectionalLight(0x4466aa, 0.7);
+fill.position.set(-60, 40, -100);
+scene.add(fill);
+scene.add(new THREE.HemisphereLight(0x334455, 0x223322, 0.5));
+
+// Materials
+var MAT = {
+  ground:      new THREE.MeshLambertMaterial({ color: 0x151f12 }),
+  grass:       new THREE.MeshLambertMaterial({ color: 0x3d8b5e }),
+  darkGrass:   new THREE.MeshLambertMaterial({ color: 0x2d6e40 }),
+  wetland:     new THREE.MeshLambertMaterial({ color: 0x4a7c45 }),
+  garden:      new THREE.MeshLambertMaterial({ color: 0x7ab840 }),
+  water:       new THREE.MeshLambertMaterial({ color: 0x1a5a7a, transparent: true, opacity: 0.85 }),
+  brownA:      new THREE.MeshLambertMaterial({ color: 0xb8895a }),
+  brownB:      new THREE.MeshLambertMaterial({ color: 0xc9a06e }),
+  brownC:      new THREE.MeshLambertMaterial({ color: 0xa07848 }),
+  brownRoof:   new THREE.MeshLambertMaterial({ color: 0x6a3a20 }),
+  skyA:        new THREE.MeshLambertMaterial({ color: 0x7ab3c4 }),
+  skyB:        new THREE.MeshLambertMaterial({ color: 0x5a9eb8 }),
+  skyGlass:    new THREE.MeshLambertMaterial({ color: 0xaaddee, transparent: true, opacity: 0.78 }),
+  vgarden:     new THREE.MeshLambertMaterial({ color: 0x2d6e4a }),
+  vleaf:       new THREE.MeshLambertMaterial({ color: 0x48a060 }),
+  transit:     new THREE.MeshLambertMaterial({ color: 0xd4a853 }),
+  transitDark: new THREE.MeshLambertMaterial({ color: 0xa07030 }),
+  pedestrian:  new THREE.MeshLambertMaterial({ color: 0xd8c89a }),
+  dam:         new THREE.MeshLambertMaterial({ color: 0x7a6a5a }),
+  damDark:     new THREE.MeshLambertMaterial({ color: 0x5a4a3a }),
+  solar:       new THREE.MeshLambertMaterial({ color: 0x2244aa, emissive: new THREE.Color(0x1133aa), emissiveIntensity: 0.4 }),
+  solarFrame:  new THREE.MeshLambertMaterial({ color: 0x888888 }),
+  forest:      new THREE.MeshLambertMaterial({ color: 0x2a5a30 }),
+  forestDark:  new THREE.MeshLambertMaterial({ color: 0x1e4225 }),
+  trunk:       new THREE.MeshLambertMaterial({ color: 0x5a3a20 }),
+  path:        new THREE.MeshLambertMaterial({ color: 0xe8d5a3 }),
+  pathDark:    new THREE.MeshLambertMaterial({ color: 0xc8b080 }),
+  rail:        new THREE.MeshLambertMaterial({ color: 0x888888 }),
+  petal:       new THREE.MeshLambertMaterial({ color: 0x3a7a50, transparent: true, opacity: 0.92 }),
+};
+
+// Layer Groups
+var G = {
+  base:      new THREE.Group(),
+  green:     new THREE.Group(),
+  transit:   new THREE.Group(),
+  buildings: new THREE.Group(),
+  water:     new THREE.Group(),
+  solar:     new THREE.Group(),
+};
+Object.keys(G).forEach(function(k) { scene.add(G[k]); });
+
+// Helpers
+function rng(a, b) { return a + Math.random() * (b - a); }
+
+function mkBox(w, h, d, mat, x, y, z, ry, grp, lbl) {
+  var m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+  m.position.set(x, y, z);
+  if (ry) m.rotation.y = ry;
+  m.castShadow = true; m.receiveShadow = true;
+  if (lbl) m.userData.label = lbl;
+  grp.add(m); return m;
+}
+
+function mkCyl(rt, rb, h, seg, mat, x, y, z, grp, lbl) {
+  var m = new THREE.Mesh(new THREE.CylinderGeometry(rt, rb, h, seg), mat);
+  m.position.set(x, y, z);
+  m.castShadow = true; m.receiveShadow = true;
+  if (lbl) m.userData.label = lbl;
+  grp.add(m); return m;
+}
+
+function mkSphere(r, seg, mat, x, y, z, grp, lbl) {
+  var m = new THREE.Mesh(new THREE.SphereGeometry(r, seg, seg), mat);
+  m.position.set(x, y, z);
+  m.castShadow = true;
+  if (lbl) m.userData.label = lbl;
+  grp.add(m); return m;
+}
+
+function mkTube(pts, rad, mat, grp, lbl) {
+  var curve = new THREE.CatmullRomCurve3(pts);
+  var geo = new THREE.TubeGeometry(curve, pts.length * 6, rad, 6, false);
+  var m = new THREE.Mesh(geo, mat);
+  m.receiveShadow = true;
+  if (lbl) m.userData.label = lbl;
+  grp.add(m); return m;
+}
+
+function V3(x, y, z) { return new THREE.Vector3(x, y, z); }
+
+// Scale: 1 unit ~ 100m. City radius ~108 units for 150 sq mi
+var CITY_R = 108;
+var RIVER_W = 14;
+var PETAL_R = 72;
+var PETAL_W = 38;
+var PETAL_N = 6;
+var INNER_R = 22;
+var DAM_X = -105;
+
+// Ground
+var gm = new THREE.Mesh(new THREE.CircleGeometry(CITY_R + 20, 128), MAT.ground);
+gm.rotation.x = -Math.PI / 2;
+gm.receiveShadow = true;
+gm.userData.label = 'Fleur City Limits\n150 sq miles · 4,000,000 residents\nLandlocked Central Europe';
+G.base.add(gm);
+
+// Flower Petals
+for (var i = 0; i < PETAL_N; i++) {
+  var ang = (i / PETAL_N) * Math.PI * 2;
+  var px = Math.cos(ang) * PETAL_R;
+  var pz = Math.sin(ang) * PETAL_R;
+  var pg = new THREE.Mesh(new THREE.SphereGeometry(PETAL_W * 0.52, 32, 8, 0, Math.PI * 2, 0, Math.PI * 0.5), MAT.petal);
+  pg.scale.set(1.15, 0.06, 0.9);
+  pg.rotation.y = ang;
+  pg.position.set(px * 0.88, 0.12, pz * 0.88);
+  pg.receiveShadow = true;
+  pg.userData.label = 'Petal District ' + (i+1) + '\nMixed residential + commercial\nBrownstones + mid-rise towers\n~650,000 residents';
+  G.green.add(pg);
+
+  // Wildlife corridors between petals
+  var ca = ang + Math.PI / PETAL_N;
+  mkTube([
+    V3(Math.cos(ca) * 10, 0.1, Math.sin(ca) * 10),
+    V3(Math.cos(ca) * 55, 0.1, Math.sin(ca) * 55),
+    V3(Math.cos(ca) * 95, 0.1, Math.sin(ca) * 95)
+  ], 3.5, MAT.darkGrass, G.green, 'Wildlife Corridor\nNative vegetation strip\nSmall mammal underpasses\nConnects all green zones');
+}
+
+// River
+mkBox(260, 0.4, RIVER_W * 2, MAT.water, 0, 0.2, 0, 0, G.water, 'The Vela River\nWidth: ~180m\nMain city waterway\nFish passage maintained');
+mkBox(260, 0.18, 8, MAT.wetland, 0, 0.12, -(RIVER_W + 4), 0, G.green, 'North Wetland Restoration\nReed beds + native aquatics\nStormwater filtration');
+mkBox(260, 0.18, 8, MAT.wetland, 0, 0.12, (RIVER_W + 4), 0, G.green, 'South Wetland Restoration\nReed beds + native aquatics\nStormwater filtration');
+mkBox(250, 0.15, 5, MAT.pedestrian, 0, 0.16, -(RIVER_W + 11), 0, G.base, 'North Riverside Promenade\n18m wide pedestrian boulevard\nBike lane + tram stop every 400m');
+mkBox(250, 0.15, 5, MAT.pedestrian, 0, 0.16, (RIVER_W + 11), 0, G.base, 'South Riverside Promenade\n18m wide pedestrian boulevard\nBike lane + tram stop every 400m');
+
+// Riverside trees
+for (var tx = -120; tx <= 120; tx += 8) {
+  if (Math.abs(tx) > 4) {
+    mkCyl(0.2, 0.3, 2.2, 6, MAT.trunk, tx, 1.1, -(RIVER_W + 14), G.green, null);
+    mkSphere(1.5, 7, MAT.forest, tx, 3.2, -(RIVER_W + 14), G.green, 'Riverside Tree');
+    mkCyl(0.2, 0.3, 2.2, 6, MAT.trunk, tx, 1.1, (RIVER_W + 14), G.green, null);
+    mkSphere(1.5, 7, MAT.forest, tx, 3.2, (RIVER_W + 14), G.green, 'Riverside Tree');
+  }
+}
+
+// Pedestrian Bridges
+var bridgeXs = [-80, -55, -30, -5, 20, 45, 70, 95];
+for (var bi = 0; bi < bridgeXs.length; bi++) {
+  var bx = bridgeXs[bi];
+  mkBox(5, 0.8, RIVER_W * 2.4, MAT.pedestrian, bx, 0.7, 0, 0, G.base, 'Pedestrian Bridge ' + (bi+1) + '\nCycle + walking only\nViewpoints over Vela River');
+  mkBox(5, 1.2, 0.25, MAT.rail, bx, 1.3, -(RIVER_W + 0.2), 0, G.base, null);
+  mkBox(5, 1.2, 0.25, MAT.rail, bx, 1.3, (RIVER_W + 0.2), 0, G.base, null);
+}
+
+// Hydroelectric Dam
+mkBox(6, 12, RIVER_W * 2.6, MAT.dam, DAM_X, 6, 0, 0, G.water, 'Vela Hydroelectric Dam\nCapacity: ~320 MW\nFish ladder on south side\nFlood control gates');
+mkBox(8, 8, RIVER_W * 2.6, MAT.damDark, DAM_X + 1, 4, 0, 0, G.water, null);
+for (var tz = -10; tz <= 10; tz += 4) {
+  var turb = mkCyl(1.0, 1.0, 5.5, 10, MAT.transit, DAM_X, 1.5, tz, G.water, 'Turbine Unit\n~40MW each\n8 units total');
+  turb.rotation.z = Math.PI / 2;
+}
+mkBox(8, 6, 6, MAT.dam, DAM_X - 4, 3, 16, 0, G.water, 'Dam Control Center\nMonitoring + operations');
+
+// City Center: Vertical Garden Spire
+var SPIRE_H = 80;
+mkBox(10, SPIRE_H, 10, MAT.vgarden, 0, SPIRE_H / 2, 0, 0, G.buildings, 'The Garden Spire\nVertical garden city center\nHeight: ~200m\nPublic civic + market floors\nGreen terrace every 4 floors');
+for (var f = 1; f <= 16; f++) {
+  var fa = f * 0.75;
+  var ftx = Math.cos(fa) * 9;
+  var ftz = Math.sin(fa) * 9;
+  var fty = f * 4.5 + 1;
+  mkBox(11, 0.5, 5, MAT.garden, ftx, fty, ftz, fa, G.buildings, 'Garden Terrace Level ' + f + '\nCommunity garden + cafe\nOpen to public');
+  mkCyl(0.18, 0.22, 1.5, 6, MAT.trunk, ftx, fty + 1.2, ftz, G.buildings, null);
+  mkSphere(0.9, 7, MAT.vleaf, ftx, fty + 2.3, ftz, G.buildings, 'Terrace Tree Level ' + f);
+}
+
+// Secondary core towers
+var corePos = [[-18,-12],[18,-12],[-18,12],[18,12]];
+for (var ci = 0; ci < corePos.length; ci++) {
+  var cx = corePos[ci][0], cz2 = corePos[ci][1];
+  var ch = 35 + rng(0, 15);
+  mkBox(7, ch, 7, MAT.skyA, cx, ch/2, cz2, 0, G.buildings, 'City Center Tower\nMixed use: office + residential\nHeight: ~' + Math.round(ch*2.5) + 'm');
+  mkBox(7.2, 0.4, 7.2, MAT.garden, cx, ch + 0.2, cz2, 0, G.buildings, 'Green roof');
+  mkBox(5.5, 0.2, 5.5, MAT.solar, cx, ch + 0.3, cz2, 0, G.solar, 'Rooftop Solar\nBuilding-integrated PV');
+}
+
+// Central plaza ring
+var plazaRing = new THREE.Mesh(new THREE.RingGeometry(10, 22, 64), MAT.pedestrian);
+plazaRing.rotation.x = -Math.PI / 2;
+plazaRing.position.set(0, 0.18, 0);
+plazaRing.userData.label = 'Central Plaza\nFully pedestrian\nMarkets, events, fountain\nBike parking hub';
+G.base.add(plazaRing);
+
+// Brownstones per petal
+function placeBrownstones(cx, cz, count, baseAng, dIdx) {
+  for (var bi2 = 0; bi2 < count; bi2++) {
+    var a2 = baseAng + (bi2 / count) * Math.PI * 0.85 - 0.4;
+    var r2 = rng(22, 52);
+    var x2 = cx + Math.cos(a2) * r2;
+    var z2 = cz + Math.sin(a2) * r2;
+    if (Math.abs(z2) < RIVER_W + 12 && Math.abs(x2) < 130) continue;
+    if (Math.sqrt(x2*x2 + z2*z2) < INNER_R) continue;
+    var h2 = rng(3.5, 7);
+    var w2 = rng(2.5, 4);
+    var bMats = [MAT.brownA, MAT.brownB, MAT.brownC];
+    var bm = bMats[Math.floor(Math.random() * 3)];
+    mkBox(w2, h2, w2*1.3, bm, x2, h2/2, z2, rng(-0.1,0.1), G.buildings,
+      'Brownstone Block · District ' + (dIdx+1) + '\n4-6 story mixed use\nGround floor retail\nResidents: ~' + Math.round(h2*40));
+    mkBox(w2+0.3, 0.4, w2*1.3+0.3, MAT.brownRoof, x2, h2+0.2, z2, 0, G.buildings, null);
+  }
+}
+for (var pi = 0; pi < PETAL_N; pi++) {
+  var pang = (pi / PETAL_N) * Math.PI * 2;
+  placeBrownstones(Math.cos(pang)*PETAL_R*0.82, Math.sin(pang)*PETAL_R*0.82, 28, pang, pi);
+}
+for (var ri = 0; ri < 24; ri++) {
+  var ra = (ri / 24) * Math.PI * 2;
+  var rr = rng(28, 45), rx = Math.cos(ra)*rr, rz = Math.sin(ra)*rr;
+  if (Math.abs(rz) < RIVER_W+10 && Math.abs(rx) < 130) continue;
+  var rh = rng(5, 9), rw = rng(2.8, 4.5);
+  mkBox(rw, rh, rw*1.2, MAT.brownB, rx, rh/2, rz, rng(-0.15,0.15), G.buildings, 'Mid-ring Brownstone\n5-8 story high-density residential\nGround floor: cafe or retail');
+  mkBox(rw+0.3, 0.4, rw*1.2+0.3, MAT.brownRoof, rx, rh+0.2, rz, 0, G.buildings, null);
+}
+
+// Skyscrapers - 4 rings
+var towerRings = [
+  { r: 38, count: 10, minH: 22, maxH: 45 },
+  { r: 58, count: 14, minH: 18, maxH: 40 },
+  { r: 78, count: 16, minH: 14, maxH: 32 },
+  { r: 95, count: 12, minH: 10, maxH: 24 },
+];
+for (var tri = 0; tri < towerRings.length; tri++) {
+  var ring = towerRings[tri];
+  for (var ti = 0; ti < ring.count; ti++) {
+    var ta = (ti / ring.count) * Math.PI * 2 + rng(-0.1, 0.1);
+    var tx2 = Math.cos(ta)*ring.r + rng(-3,3);
+    var tz2 = Math.sin(ta)*ring.r + rng(-3,3);
+    if (Math.abs(tz2) < RIVER_W+14 && Math.abs(tx2) < 130) continue;
+    if (Math.sqrt(tx2*tx2+tz2*tz2) < INNER_R+5) continue;
+    var th2 = rng(ring.minH, ring.maxH);
+    var tw2 = rng(3.5, 6);
+    var skyMats = [MAT.skyA, MAT.skyB, MAT.skyGlass];
+    var sm = skyMats[Math.floor(Math.random()*3)];
+    mkBox(tw2, th2, tw2, sm, tx2, th2/2, tz2, rng(-0.05,0.05), G.buildings,
+      'Apartment Tower\nHeight: ~'+Math.round(th2*2.5)+'m\n'+Math.round(th2/3)+' floors\nResidents: ~'+Math.round(th2*80)+'\nGreen roof + solar');
+    mkBox(tw2+0.5, 0.35, tw2+0.5, MAT.grass, tx2, th2*0.55, tz2, 0, G.buildings, 'Green setback terrace');
+    mkBox(tw2+0.5, 0.35, tw2+0.5, MAT.grass, tx2, th2*0.78, tz2, 0, G.buildings, 'Green setback terrace');
+    mkBox(tw2*0.85, 0.2, tw2*0.85, MAT.solar, tx2, th2+0.12, tz2, rng(0,0.5), G.solar, 'Rooftop Solar Array\nBuilding-integrated PV');
+  }
+}
+
+// Transit Stations
+var stations = [];
+stations.push([0, 0, 'Central Hub', 'Interchange: all 4 tram lines\nMetro + bus + bike share']);
+for (var si = 0; si < 8; si++) {
+  var sa = (si/8)*Math.PI*2;
+  stations.push([Math.cos(sa)*22, Math.sin(sa)*22, 'Inner Ring '+(si+1), 'Tram + bus\nBike share']);
+}
+for (var si = 0; si < 14; si++) {
+  var sa = (si/14)*Math.PI*2;
+  stations.push([Math.cos(sa)*46, Math.sin(sa)*46, 'Mid Ring '+(si+1), 'Tram + bus\nBike share + e-scooter']);
+}
+for (var si = 0; si < 18; si++) {
+  var sa = (si/18)*Math.PI*2;
+  stations.push([Math.cos(sa)*78, Math.sin(sa)*78, 'Outer Ring '+(si+1), 'Tram terminus\nPark and ride\nBike share']);
+}
+var riverStops = [-80, -50, -20, 10, 40, 70];
+for (var rsi = 0; rsi < riverStops.length; rsi++) {
+  stations.push([riverStops[rsi], RIVER_W+15, 'N River '+(rsi+1), 'Riverside tram\nFerry connection']);
+  stations.push([riverStops[rsi], -(RIVER_W+15), 'S River '+(rsi+1), 'Riverside tram\nFerry connection']);
+}
+stations.push([DAM_X+8, 0, 'Dam Station', 'Service + tourist tram\nHydro visitor center']);
+
+for (var sti = 0; sti < stations.length; sti++) {
+  var sx = stations[sti][0], sz = stations[sti][2+0-2+0];
+  var sname = stations[sti][2], sinfo = stations[sti][3];
+  sx = stations[sti][0]; var sz2 = stations[sti][1];
+  if (Math.sqrt(sx*sx + sz2*sz2) > CITY_R+5) continue;
+  mkBox(8, 0.3, 8, MAT.pedestrian, sx, 0.18, sz2, 0, G.transit, 'Transit Station: '+sname+'\n'+sinfo+'\nAll residents within 600m');
+  mkBox(9, 0.35, 9, MAT.transit, sx, 2.8, sz2, 0, G.transit, null);
+  var sps = [[-3,-3],[3,-3],[-3,3],[3,3]];
+  for (var spi = 0; spi < sps.length; spi++) {
+    mkBox(0.3, 2.8, 0.3, MAT.transitDark, sx+sps[spi][0], 1.4, sz2+sps[spi][1], 0, G.transit, null);
+  }
+  mkBox(7, 0.15, 7, MAT.solar, sx, 3.1, sz2, 0, G.solar, 'Station Solar Canopy: '+sname);
+}
+
+// Tram network
+mkTube([V3(-135,0.25,-(RIVER_W+12)), V3(0,0.25,-(RIVER_W+12)), V3(135,0.25,-(RIVER_W+12))], 0.45, MAT.transit, G.transit, 'Tram Line 1 — North Riverside');
+mkTube([V3(-135,0.25,RIVER_W+12), V3(0,0.25,RIVER_W+12), V3(135,0.25,RIVER_W+12)], 0.45, MAT.transit, G.transit, 'Tram Line 2 — South Riverside');
+mkTube([V3(-30,0.25,-CITY_R), V3(-30,0.25,0), V3(-30,0.25,CITY_R)], 0.45, MAT.transit, G.transit, 'Tram Line 3 — West N-S');
+mkTube([V3(30,0.25,-CITY_R), V3(30,0.25,0), V3(30,0.25,CITY_R)], 0.45, MAT.transit, G.transit, 'Tram Line 4 — East N-S');
+
+// Ring trams
+function makeRingTram(r, segs, mat, lbl) {
+  var pts = [];
+  for (var ri2 = 0; ri2 <= segs; ri2++) {
+    var ra2 = (ri2/segs)*Math.PI*2;
+    pts.push(V3(Math.cos(ra2)*r, 0.25, Math.sin(ra2)*r));
+  }
+  var c = new THREE.CatmullRomCurve3(pts, true);
+  var m2 = new THREE.Mesh(new THREE.TubeGeometry(c, segs*4, 0.4, 6, true), mat);
+  if (lbl) m2.userData.label = lbl;
+  G.transit.add(m2);
+}
+makeRingTram(22, 32, MAT.transit, 'Inner Ring Tram\n8 stations');
+makeRingTram(46, 64, MAT.transit, 'Mid Ring Tram\n14 stations');
+makeRingTram(78, 96, MAT.transit, 'Outer Ring Tram\n18 stations');
+
+// Spoke trams
+for (var spi2 = 0; spi2 < PETAL_N; spi2++) {
+  var spa = (spi2/PETAL_N)*Math.PI*2;
+  mkTube([V3(Math.cos(spa)*22,0.25,Math.sin(spa)*22), V3(Math.cos(spa)*78,0.25,Math.sin(spa)*78)], 0.38, MAT.transit, G.transit, 'Spoke Tram Line '+(spi2+1));
+}
+
+// Pedestrian boulevards
+for (var pbi = 0; pbi < PETAL_N; pbi++) {
+  var pba = (pbi/PETAL_N)*Math.PI*2;
+  mkTube([V3(0,0.16,0), V3(Math.cos(pba)*CITY_R,0.16,Math.sin(pba)*CITY_R)], 2.5, MAT.path, G.base, 'Pedestrian Boulevard\n20m wide\nBike lane + trees\nMax speed: 20 km/h');
+}
+
+// Bike network
+for (var bki = 0; bki < 12; bki++) {
+  var bka = (bki/12)*Math.PI*2 + 0.26;
+  mkTube([V3(0,0.17,0), V3(Math.cos(bka)*(CITY_R+5),0.17,Math.sin(bka)*(CITY_R+5))], 0.7, MAT.pathDark, G.transit, 'Bike Superhighway\nSeparated protected lane\nCopenhagen-style infrastructure');
+}
+
+// Parks
+for (var ring2 = 1; ring2 <= 3; ring2++) {
+  var pcount = ring2 * 6;
+  for (var ki = 0; ki < pcount; ki++) {
+    var ka = (ki/pcount)*Math.PI*2 + ring2*0.3;
+    var kr = ring2*30+10;
+    var kx = Math.cos(ka)*kr, kz2 = Math.sin(ka)*kr;
+    if (Math.abs(kz2) < RIVER_W+8 && Math.abs(kx) < 130) continue;
+    if (Math.sqrt(kx*kx+kz2*kz2) > CITY_R-5) continue;
+    var ks = 6 + ring2*2;
+    mkBox(ks*1.5, 0.1, ks*1.5, MAT.grass, kx, 0.08, kz2, 0, G.green, 'Neighborhood Park\nSize: ~'+Math.round(ks*15)+'m x '+Math.round(ks*15)+'m\nPlayground, sports, picnic');
+    for (var kt = 0; kt < Math.floor(ks*0.6); kt++) {
+      var ktx = kx+rng(-ks*0.6,ks*0.6), ktz = kz2+rng(-ks*0.6,ks*0.6);
+      var kth = rng(2,4);
+      mkCyl(0.18, 0.25, kth*0.5, 6, MAT.trunk, ktx, kth*0.25, ktz, G.green, null);
+      mkSphere(kth*0.45, 7, MAT.forest, ktx, kth*0.65, ktz, G.green, 'Park Tree');
+    }
+  }
+}
+
+// Urban forests between petals
+for (var ufi = 0; ufi < PETAL_N; ufi++) {
+  var ufa = (ufi/PETAL_N)*Math.PI*2 + Math.PI/PETAL_N;
+  for (var ufr = 28; ufr < CITY_R-10; ufr += 9) {
+    for (var uda = -0.38; uda <= 0.38; uda += 0.14) {
+      var ufx = Math.cos(ufa+uda)*ufr + rng(-2,2);
+      var ufz = Math.sin(ufa+uda)*ufr + rng(-2,2);
+      if (Math.abs(ufz) < RIVER_W+6) continue;
+      if (Math.sqrt(ufx*ufx+ufz*ufz) > CITY_R) continue;
+      var uth = rng(2.5, 5.5);
+      var ufm = Math.random()>0.4 ? MAT.forest : MAT.forestDark;
+      mkCyl(0.22, 0.3, uth*0.5, 6, MAT.trunk, ufx, uth*0.25, ufz, G.green, null);
+      mkSphere(uth*0.48, 7, ufm, ufx, uth*0.68, ufz, G.green, 'Urban Forest\nCarbon sequestration\nShade corridor');
+    }
+  }
+}
+
+// Community gardens
+var gardenLocs = [
+  [30,-45],[-30,-45],[55,-30],[-55,-30],
+  [30,45],[-30,45],[55,30],[-55,30],
+  [75,-15],[-75,-15],[75,15],[-75,15],
+  [40,-70],[-40,-70],[40,70],[-40,70],
+  [20,-90],[-20,-90],[20,90],[-20,90],
+  [65,-60],[-65,-60],[65,60],[-65,60]
+];
+for (var gli = 0; gli < gardenLocs.length; gli++) {
+  var glx = gardenLocs[gli][0], glz = gardenLocs[gli][1];
+  if (Math.sqrt(glx*glx+glz*glz) > CITY_R-3) continue;
+  mkBox(12,0.2,12, MAT.garden, glx, 0.12, glz, 0, G.green, 'Community Garden\nResident allotments\nComposting on-site\nFresh produce for residents');
+  for (var gr = -4; gr <= 4; gr += 2) {
+    mkBox(0.6, 0.35, 10, MAT.darkGrass, glx+gr, 0.38, glz, 0, G.green, 'Garden Bed');
+  }
+}
+
+// Solar farms (peripheral)
+var solarLocs = [
+  [-95,-50,0.2],[95,-50,-0.2],[-95,50,0.1],[95,50,-0.1],
+  [-110,20,0.3],[110,20,-0.3],[-110,-20,0.15],[110,-20,-0.15],
+  [0,-105,0],[0,105,0],[-60,-95,0.1],[60,-95,-0.1],[-60,95,0.1],[60,95,-0.1]
+];
+for (var sli = 0; sli < solarLocs.length; sli++) {
+  var slx = solarLocs[sli][0], slz = solarLocs[sli][1], slry = solarLocs[sli][2];
+  if (Math.sqrt(slx*slx+slz*slz) > CITY_R+18) continue;
+  for (var slr = 0; slr < 5; slr++) {
+    for (var slc = 0; slc < 7; slc++) {
+      var spx = slx+slr*3.5-7, spz = slz+slc*2.8-8.4;
+      var sp = mkBox(3,0.12,1.6, MAT.solar, spx, 0.9, spz, slry, G.solar, 'Solar Farm Panel\nUtility-scale PV\nCity total: ~2.4 GW');
+      sp.rotation.x = -0.38;
+    }
+  }
+}
+
+// Orbit controls
+var dragging = false, rightDrag = false;
+var prev = { x: 0, y: 0 };
+var sph = { theta: 0.45, phi: 0.75, r: 210 };
+var tgt = new THREE.Vector3(0, 0, 0);
+
+function updateCam() {
+  camera.position.set(
+    tgt.x + sph.r * Math.sin(sph.phi) * Math.sin(sph.theta),
+    tgt.y + sph.r * Math.cos(sph.phi),
+    tgt.z + sph.r * Math.sin(sph.phi) * Math.cos(sph.theta)
+  );
+  camera.lookAt(tgt);
+}
+updateCam();
+
+canvas.addEventListener('mousedown', function(e) { dragging=true; rightDrag=e.button===2; prev={x:e.clientX,y:e.clientY}; });
+canvas.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+window.addEventListener('mouseup', function() { dragging=false; });
+window.addEventListener('mousemove', function(e) {
+  if (!dragging) return;
+  var dx=e.clientX-prev.x, dy=e.clientY-prev.y;
+  prev={x:e.clientX,y:e.clientY};
+  if (rightDrag) { tgt.x-=dx*0.18; tgt.z-=dy*0.18; }
+  else { sph.theta-=dx*0.007; sph.phi=Math.max(0.08,Math.min(1.52,sph.phi+dy*0.007)); }
+  updateCam();
+});
+canvas.addEventListener('wheel', function(e) { sph.r=Math.max(20,Math.min(400,sph.r+e.deltaY*0.18)); updateCam(); });
+
+// Tooltip
+var raycaster = new THREE.Raycaster();
+var mouse2 = new THREE.Vector2();
+var tip = document.getElementById('tip');
+var allMeshes = [];
+scene.traverse(function(o) { if (o.isMesh && o.userData.label) allMeshes.push(o); });
+
+window.addEventListener('mousemove', function(e) {
+  mouse2.x=(e.clientX/window.innerWidth)*2-1;
+  mouse2.y=-(e.clientY/window.innerHeight)*2+1;
+  raycaster.setFromCamera(mouse2, camera);
+  var hits = raycaster.intersectObjects(allMeshes);
+  if (hits.length>0 && hits[0].object.userData.label) {
+    tip.style.display='block';
+    tip.style.left=(e.clientX+16)+'px';
+    tip.style.top=(e.clientY-10)+'px';
+    tip.innerHTML=hits[0].object.userData.label.replace(/\n/g,'<br>');
+  } else { tip.style.display='none'; }
+});
+
+// Layer toggles
+document.querySelectorAll('.lbtn').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    btn.classList.toggle('on');
+    var key=btn.id.replace('btn-','');
+    G[key].visible=!G[key].visible;
+  });
+});
+
+// Animate
+var tick = 0;
+function animate() {
+  requestAnimationFrame(animate);
+  tick += 0.008;
+  G.water.children.forEach(function(m, idx) {
+    if (m.material && m.material.transparent) m.material.opacity = 0.78 + Math.sin(tick*1.1+idx)*0.06;
+  });
+  G.solar.children.forEach(function(m, idx) {
+    if (m.material && m.material.emissiveIntensity !== undefined) m.material.emissiveIntensity = 0.3 + Math.sin(tick*0.8+idx*0.4)*0.12;
+  });
+  renderer.render(scene, camera);
+}
+animate();
+
+window.addEventListener('resize', function() {
+  var W2=window.innerWidth, H2=window.innerHeight;
+  camera.aspect=W2/H2; camera.updateProjectionMatrix();
+  renderer.setSize(W2,H2);
+});
+</script>
+</body>
+</html>
