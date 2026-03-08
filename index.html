@@ -271,77 +271,86 @@ for (var bi = 0; bi < bridgeXs.length; bi++) {
   mkBox(0.5, 0.6, 0.5, MAT.pedestrian, bx, 0.3, RIVER_W*1.2, 0, G.base);
 }
 
-// Flower road grid
+// Flower road grid — flat rectangles, no river crossings, no overlaps
 (function() {
-  var roadMat = new THREE.MeshLambertMaterial({ color: 0x303040 });
+  var roadMat = new THREE.MeshLambertMaterial({ color: 0x2e2e3e });
   var roadsGrp = new THREE.Group();
   scene.add(roadsGrp);
-  var roadY = 0.13;
 
-  // — Concentric ring roads (tube circles) —
-  [INNER_R, 44, 68, 92].forEach(function(R, ri) {
-    var N = 128, pts = [];
-    for (var i = 0; i <= N; i++) {
-      var a = (i / N) * Math.PI * 2;
-      pts.push(new THREE.Vector3(Math.cos(a) * R, roadY, Math.sin(a) * R));
+  var roadW  = 2.2;             // spoke road width
+  var chordW = 1.9;             // hex ring chord width
+  var roadH  = 0.08;            // height — keep roads flat
+  var roadY  = 0.09;            // just above ground
+  var jGap   = 1.3;             // gap on each side of a junction (avoids z-fighting)
+  var RW     = RIVER_W + 0.6;   // river avoidance half-width (with buffer)
+
+  // Clip segment (x1,z1)→(x2,z2) to the portions where |z| >= RW.
+  // Returns 0, 1, or 2 sub-segment objects.
+  function riverClip(x1, z1, x2, z2) {
+    var dx = x2 - x1, dz = z2 - z1;
+    // Horizontal segment — either fully in or fully out of river
+    if (Math.abs(dz) < 0.01) {
+      return (Math.abs(z1) >= RW) ? [{x1:x1,z1:z1,x2:x2,z2:z2}] : [];
     }
-    var tubRad = [0.95, 0.85, 0.80, 0.70][ri];
-    var curve = new THREE.CatmullRomCurve3(pts, true);
-    var m = new THREE.Mesh(new THREE.TubeGeometry(curve, 512, tubRad, 6, true), roadMat);
-    m.receiveShadow = true;
-    roadsGrp.add(m);
-  });
+    // Parametric t values where z(t) = ±RW
+    var tLo = Math.max(0, Math.min((-RW - z1) / dz, (RW - z1) / dz));
+    var tHi = Math.min(1, Math.max((-RW - z1) / dz, (RW - z1) / dz));
+    // River zone doesn't intersect this segment
+    if (tLo >= tHi) return [{x1:x1,z1:z1,x2:x2,z2:z2}];
+    var segs = [];
+    if (tLo > 0.02)  segs.push({x1:x1,          z1:z1,          x2:x1+tLo*dx, z2:z1+tLo*dz});
+    if (tHi < 0.98)  segs.push({x1:x1+tHi*dx,   z1:z1+tHi*dz,  x2:x2,        z2:z2       });
+    return segs;
+  }
 
-  // — 6 radial spokes at inter-petal angles: 30, 90, 150, 210, 270, 330 deg —
-  // (offset from petal axes so they run through the green corridors, not the river)
-  [1, 3, 5, 7, 9, 11].forEach(function(n) {
-    var a = n * Math.PI / 6;
-    var R1 = INNER_R, R2 = CITY_R - 4;
-    var len = R2 - R1;
-    var m = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.12, len), roadMat);
-    m.position.set(Math.cos(a) * (R1 + R2) / 2, roadY, Math.sin(a) * (R1 + R2) / 2);
-    m.rotation.y = Math.PI / 2 - a;
-    m.receiveShadow = true;
-    roadsGrp.add(m);
-  });
-
-  // — Petal-arc connectors between adjacent spokes —
-  // Arc outward between each pair of adjacent spokes at two mid-ring levels,
-  // creating convex petal shapes visible from above.
-  var spokeBase = [1, 3, 5, 7, 9, 11].map(function(n) { return n * Math.PI / 6; });
-  [44, 68].forEach(function(R, li) {
-    var bulgeAmt = [0.20, 0.16][li];
-    spokeBase.forEach(function(a1) {
-      var a2 = a1 + Math.PI / 3; // next spoke, 60° ahead (no wrap issues)
-      var pts = [];
-      for (var i = 0; i <= 20; i++) {
-        var t = i / 20;
-        var ang = a1 + t * (a2 - a1);
-        var r = R * (1 + bulgeAmt * Math.sin(t * Math.PI)); // bow outward at midpoint
-        pts.push(new THREE.Vector3(Math.cos(ang) * r, roadY, Math.sin(ang) * r));
-      }
-      var curve = new THREE.CatmullRomCurve3(pts);
-      var m = new THREE.Mesh(new THREE.TubeGeometry(curve, 80, 0.75, 5, false), roadMat);
+  // Build a flat road box for each clipped piece of (x1,z1)→(x2,z2)
+  function mkRoad(x1, z1, x2, z2, w) {
+    riverClip(x1, z1, x2, z2).forEach(function(s) {
+      var dx = s.x2 - s.x1, dz = s.z2 - s.z1;
+      var len = Math.sqrt(dx * dx + dz * dz);
+      if (len < 0.5) return;
+      var m = new THREE.Mesh(new THREE.BoxGeometry(w, roadH, len), roadMat);
+      m.position.set((s.x1 + s.x2) / 2, roadY, (s.z1 + s.z2) / 2);
+      m.rotation.y = Math.atan2(dx, dz);   // align depth with road direction
       m.receiveShadow = true;
       roadsGrp.add(m);
     });
+  }
+
+  // Six inter-petal spoke angles: 30, 90, 150, 210, 270, 330 degrees
+  var spokes   = [1, 3, 5, 7, 9, 11].map(function(n) { return n * Math.PI / 6; });
+  var hexRings = [44, 68, 92];           // ring radii
+  var outerR   = CITY_R - 4;            // city edge
+
+  // --- Radial spokes, broken into segments between ring radii ---
+  // Gaps are left at each hex-ring junction so the chord road sits on top.
+  spokes.forEach(function(a) {
+    var breaks = [INNER_R].concat(hexRings).concat([outerR]);
+    for (var i = 0; i < breaks.length - 1; i++) {
+      var r1 = breaks[i],  r2 = breaks[i + 1];
+      // Leave a gap where a hex ring sits (not at the city-edge endpoints)
+      var s1 = r1 + (hexRings.indexOf(r1) >= 0 ? jGap : 0);
+      var s2 = r2 - (hexRings.indexOf(r2) >= 0 ? jGap : 0);
+      if (s2 <= s1 + 0.5) continue;
+      mkRoad(Math.cos(a) * s1, Math.sin(a) * s1,
+             Math.cos(a) * s2, Math.sin(a) * s2, roadW);
+    }
   });
 
-  // — Inner chord connectors at the inner ring —
-  // Short straight roads connecting adjacent spoke roots to form a hexagonal core.
-  spokeBase.forEach(function(a1) {
-    var a2 = a1 + Math.PI / 3;
-    var R = INNER_R;
-    var p1x = Math.cos(a1) * R, p1z = Math.sin(a1) * R;
-    var p2x = Math.cos(a2) * R, p2z = Math.sin(a2) * R;
-    var cx = (p1x + p2x) / 2, cz = (p1z + p2z) / 2;
-    var cLen = Math.sqrt(Math.pow(p2x-p1x,2) + Math.pow(p2z-p1z,2));
-    var cAngle = Math.atan2(p2z - p1z, p2x - p1x);
-    var m = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.12, cLen), roadMat);
-    m.position.set(cx, roadY, cz);
-    m.rotation.y = Math.PI / 2 - cAngle;
-    m.receiveShadow = true;
-    roadsGrp.add(m);
+  // --- Hexagonal ring roads (straight chords connecting adjacent spoke tips) ---
+  // Each chord is trimmed by jGap at both ends so it sits cleanly between spokes.
+  // The riverClip inside mkRoad automatically splits any chord that crosses the river.
+  hexRings.forEach(function(R) {
+    spokes.forEach(function(a1) {
+      var a2 = a1 + Math.PI / 3;               // next spoke, always 60° ahead
+      var ax = Math.cos(a1) * R, az = Math.sin(a1) * R;
+      var bx = Math.cos(a2) * R, bz = Math.sin(a2) * R;
+      var dx = bx - ax, dz = bz - az;
+      var len = Math.sqrt(dx * dx + dz * dz);
+      var nx = dx / len, nz = dz / len;        // unit direction A→B
+      mkRoad(ax + nx * jGap, az + nz * jGap,
+             bx - nx * jGap, bz - nz * jGap, chordW);
+    });
   });
 })();
 
