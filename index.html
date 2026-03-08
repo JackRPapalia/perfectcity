@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Fleur — Landlocked European City</title>
+<title>Thornbugh - Perfect City</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { background: #0a0f1a; font-family: 'Georgia', serif; overflow: hidden; }
@@ -64,11 +64,11 @@
 <canvas id="canvas"></canvas>
 
 <div id="title-card">
-  <h1>FLEUR</h1>
+  <h1>Thronburgh</h1>
   <p>Landlocked Europe &nbsp;·&nbsp; 150 sq mi &nbsp;·&nbsp; Pop. 4,000,000</p>
 </div>
 
-<div id="stats">
+<!-- <div id="stats">
   <h3>City Data</h3>
   <div class="stat">Area: <span>150 sq miles</span></div>
   <div class="stat">Population: <span>4,000,000</span></div>
@@ -80,9 +80,9 @@
   <div class="stat">River: <span>Vela (~180m wide)</span></div>
   <div class="stat">Solar: <span>~2.4 GW capacity</span></div>
   <div class="stat">Hydroelectric: <span>~320 MW</span></div>
-</div>
+</div> -->
 
-<div id="legend">
+<!-- <div id="legend">
   <h3>Legend</h3>
   <div class="li"><div class="ld" style="background:#1a5a7a"></div><div class="ll">River and Water</div></div>
   <div class="li"><div class="ld" style="background:#3d8b5e"></div><div class="ll">Parks and Green Space</div></div>
@@ -96,24 +96,24 @@
   <div class="li"><div class="ld" style="background:#7a6a5a"></div><div class="ll">Hydroelectric Dam</div></div>
   <div class="li"><div class="ld" style="background:#2244aa"></div><div class="ll">Solar Arrays</div></div>
   <div class="li"><div class="ld" style="background:#e8d5a3"></div><div class="ll">Pedestrian Promenades</div></div>
-</div>
+</div> -->
 
-<div id="layers">
+<!-- <div id="layers">
   <h3>Layers</h3>
   <button class="lbtn on" id="btn-green">Green Space</button>
   <button class="lbtn on" id="btn-transit">Transit</button>
   <button class="lbtn on" id="btn-buildings">Buildings</button>
   <button class="lbtn on" id="btn-water">Water</button>
   <button class="lbtn on" id="btn-solar">Solar</button>
-</div>
+</div> -->
 
-<div id="controls">
+<!-- <div id="controls">
   <p>Navigation</p>
   <div class="ctrl">Drag: Orbit</div>
   <div class="ctrl">Scroll: Zoom</div>
   <div class="ctrl">Right-drag: Pan</div>
   <div class="ctrl">Hover: Inspect</div>
-</div>
+</div> -->
 
 <div id="tip"></div>
 
@@ -131,7 +131,6 @@ renderer.toneMappingExposure = 1.15;
 
 var scene = new THREE.Scene();
 scene.background = new THREE.Color(0x08101e);
-scene.fog = new THREE.FogExp2(0x08101e, 0.005);
 
 var camera = new THREE.PerspectiveCamera(48, W/H, 0.5, 2000);
 camera.position.set(0, 140, 210);
@@ -252,302 +251,127 @@ var DAM_X = -105;
 var gm = new THREE.Mesh(new THREE.CircleGeometry(CITY_R + 20, 128), MAT.ground);
 gm.rotation.x = -Math.PI / 2;
 gm.receiveShadow = true;
-gm.userData.label = 'Fleur City Limits\n150 sq miles · 4,000,000 residents\nLandlocked Central Europe';
 G.base.add(gm);
 
-// Flower Petals
-for (var i = 0; i < PETAL_N; i++) {
-  var ang = (i / PETAL_N) * Math.PI * 2;
-  var px = Math.cos(ang) * PETAL_R;
-  var pz = Math.sin(ang) * PETAL_R;
-  var pg = new THREE.Mesh(new THREE.SphereGeometry(PETAL_W * 0.52, 32, 8, 0, Math.PI * 2, 0, Math.PI * 0.5), MAT.petal);
-  pg.scale.set(1.15, 0.06, 0.9);
-  pg.rotation.y = ang;
-  pg.position.set(px * 0.88, 0.12, pz * 0.88);
-  pg.receiveShadow = true;
-  pg.userData.label = 'Petal District ' + (i+1) + '\nMixed residential + commercial\nBrownstones + mid-rise towers\n~650,000 residents';
-  G.green.add(pg);
-
-  // Wildlife corridors between petals
-  var ca = ang + Math.PI / PETAL_N;
-  mkTube([
-    V3(Math.cos(ca) * 10, 0.1, Math.sin(ca) * 10),
-    V3(Math.cos(ca) * 55, 0.1, Math.sin(ca) * 55),
-    V3(Math.cos(ca) * 95, 0.1, Math.sin(ca) * 95)
-  ], 3.5, MAT.darkGrass, G.green, 'Wildlife Corridor\nNative vegetation strip\nSmall mammal underpasses\nConnects all green zones');
-}
-
 // River
-mkBox(260, 0.4, RIVER_W * 2, MAT.water, 0, 0.2, 0, 0, G.water, 'The Vela River\nWidth: ~180m\nMain city waterway\nFish passage maintained');
+mkBox(260, 0.4, RIVER_W * 2, MAT.water, 0, 0, 0, 0, G.water, 'The Vela River\nWidth: ~180m\nCentral waterway');
 mkBox(260, 0.18, 8, MAT.wetland, 0, 0.12, -(RIVER_W + 4), 0, G.green, 'North Wetland Restoration\nReed beds + native aquatics\nStormwater filtration');
 mkBox(260, 0.18, 8, MAT.wetland, 0, 0.12, (RIVER_W + 4), 0, G.green, 'South Wetland Restoration\nReed beds + native aquatics\nStormwater filtration');
 mkBox(250, 0.15, 5, MAT.pedestrian, 0, 0.16, -(RIVER_W + 11), 0, G.base, 'North Riverside Promenade\n18m wide pedestrian boulevard\nBike lane + tram stop every 400m');
 mkBox(250, 0.15, 5, MAT.pedestrian, 0, 0.16, (RIVER_W + 11), 0, G.base, 'South Riverside Promenade\n18m wide pedestrian boulevard\nBike lane + tram stop every 400m');
 
-// Riverside trees
-for (var tx = -120; tx <= 120; tx += 8) {
-  if (Math.abs(tx) > 4) {
-    mkCyl(0.2, 0.3, 2.2, 6, MAT.trunk, tx, 1.1, -(RIVER_W + 14), G.green, null);
-    mkSphere(1.5, 7, MAT.forest, tx, 3.2, -(RIVER_W + 14), G.green, 'Riverside Tree');
-    mkCyl(0.2, 0.3, 2.2, 6, MAT.trunk, tx, 1.1, (RIVER_W + 14), G.green, null);
-    mkSphere(1.5, 7, MAT.forest, tx, 3.2, (RIVER_W + 14), G.green, 'Riverside Tree');
-  }
-}
-
 // Pedestrian Bridges
 var bridgeXs = [-80, -55, -30, -5, 20, 45, 70, 95];
 for (var bi = 0; bi < bridgeXs.length; bi++) {
   var bx = bridgeXs[bi];
-  mkBox(5, 0.8, RIVER_W * 2.4, MAT.pedestrian, bx, 0.7, 0, 0, G.base, 'Pedestrian Bridge ' + (bi+1) + '\nCycle + walking only\nViewpoints over Vela River');
-  mkBox(5, 1.2, 0.25, MAT.rail, bx, 1.3, -(RIVER_W + 0.2), 0, G.base, null);
-  mkBox(5, 1.2, 0.25, MAT.rail, bx, 1.3, (RIVER_W + 0.2), 0, G.base, null);
+  mkBox(5, 0.8, RIVER_W * 2.4, MAT.pedestrian, bx, 1.0, 0, 0, G.base, 'Pedestrian Bridge ' + (bi+1) + '\nCycle + walking only\nViewpoints over Vela River');
+  mkBox(5, 1.2, 0.25, MAT.rail, bx, 1.6, -(RIVER_W + 0.2), 0, G.base, null);
+  mkBox(5, 1.2, 0.25, MAT.rail, bx, 1.6, (RIVER_W + 0.2), 0, G.base, null);
+  mkBox(0.5, 0.6, 0.5, MAT.pedestrian, bx, 0.3, -RIVER_W*1.2, 0, G.base);
+  mkBox(0.5, 0.6, 0.5, MAT.pedestrian, bx, 0.3, RIVER_W*1.2, 0, G.base);
 }
 
-// Hydroelectric Dam
-mkBox(6, 12, RIVER_W * 2.6, MAT.dam, DAM_X, 6, 0, 0, G.water, 'Vela Hydroelectric Dam\nCapacity: ~320 MW\nFish ladder on south side\nFlood control gates');
-mkBox(8, 8, RIVER_W * 2.6, MAT.damDark, DAM_X + 1, 4, 0, 0, G.water, null);
-for (var tz = -10; tz <= 10; tz += 4) {
-  var turb = mkCyl(1.0, 1.0, 5.5, 10, MAT.transit, DAM_X, 1.5, tz, G.water, 'Turbine Unit\n~40MW each\n8 units total');
-  turb.rotation.z = Math.PI / 2;
-}
-mkBox(8, 6, 6, MAT.dam, DAM_X - 4, 3, 16, 0, G.water, 'Dam Control Center\nMonitoring + operations');
+// Flower road grid
+(function() {
+  var roadMat = new THREE.MeshLambertMaterial({ color: 0x303040 });
+  var roadsGrp = new THREE.Group();
+  scene.add(roadsGrp);
+  var roadY = 0.13;
 
-// City Center: Vertical Garden Spire
-var SPIRE_H = 80;
-mkBox(10, SPIRE_H, 10, MAT.vgarden, 0, SPIRE_H / 2, 0, 0, G.buildings, 'The Garden Spire\nVertical garden city center\nHeight: ~200m\nPublic civic + market floors\nGreen terrace every 4 floors');
-for (var f = 1; f <= 16; f++) {
-  var fa = f * 0.75;
-  var ftx = Math.cos(fa) * 9;
-  var ftz = Math.sin(fa) * 9;
-  var fty = f * 4.5 + 1;
-  mkBox(11, 0.5, 5, MAT.garden, ftx, fty, ftz, fa, G.buildings, 'Garden Terrace Level ' + f + '\nCommunity garden + cafe\nOpen to public');
-  mkCyl(0.18, 0.22, 1.5, 6, MAT.trunk, ftx, fty + 1.2, ftz, G.buildings, null);
-  mkSphere(0.9, 7, MAT.vleaf, ftx, fty + 2.3, ftz, G.buildings, 'Terrace Tree Level ' + f);
-}
-
-// Secondary core towers
-var corePos = [[-18,-12],[18,-12],[-18,12],[18,12]];
-for (var ci = 0; ci < corePos.length; ci++) {
-  var cx = corePos[ci][0], cz2 = corePos[ci][1];
-  var ch = 35 + rng(0, 15);
-  mkBox(7, ch, 7, MAT.skyA, cx, ch/2, cz2, 0, G.buildings, 'City Center Tower\nMixed use: office + residential\nHeight: ~' + Math.round(ch*2.5) + 'm');
-  mkBox(7.2, 0.4, 7.2, MAT.garden, cx, ch + 0.2, cz2, 0, G.buildings, 'Green roof');
-  mkBox(5.5, 0.2, 5.5, MAT.solar, cx, ch + 0.3, cz2, 0, G.solar, 'Rooftop Solar\nBuilding-integrated PV');
-}
-
-// Central plaza ring
-var plazaRing = new THREE.Mesh(new THREE.RingGeometry(10, 22, 64), MAT.pedestrian);
-plazaRing.rotation.x = -Math.PI / 2;
-plazaRing.position.set(0, 0.18, 0);
-plazaRing.userData.label = 'Central Plaza\nFully pedestrian\nMarkets, events, fountain\nBike parking hub';
-G.base.add(plazaRing);
-
-// Brownstones per petal
-function placeBrownstones(cx, cz, count, baseAng, dIdx) {
-  for (var bi2 = 0; bi2 < count; bi2++) {
-    var a2 = baseAng + (bi2 / count) * Math.PI * 0.85 - 0.4;
-    var r2 = rng(22, 52);
-    var x2 = cx + Math.cos(a2) * r2;
-    var z2 = cz + Math.sin(a2) * r2;
-    if (Math.abs(z2) < RIVER_W + 12 && Math.abs(x2) < 130) continue;
-    if (Math.sqrt(x2*x2 + z2*z2) < INNER_R) continue;
-    var h2 = rng(3.5, 7);
-    var w2 = rng(2.5, 4);
-    var bMats = [MAT.brownA, MAT.brownB, MAT.brownC];
-    var bm = bMats[Math.floor(Math.random() * 3)];
-    mkBox(w2, h2, w2*1.3, bm, x2, h2/2, z2, rng(-0.1,0.1), G.buildings,
-      'Brownstone Block · District ' + (dIdx+1) + '\n4-6 story mixed use\nGround floor retail\nResidents: ~' + Math.round(h2*40));
-    mkBox(w2+0.3, 0.4, w2*1.3+0.3, MAT.brownRoof, x2, h2+0.2, z2, 0, G.buildings, null);
-  }
-}
-for (var pi = 0; pi < PETAL_N; pi++) {
-  var pang = (pi / PETAL_N) * Math.PI * 2;
-  placeBrownstones(Math.cos(pang)*PETAL_R*0.82, Math.sin(pang)*PETAL_R*0.82, 28, pang, pi);
-}
-for (var ri = 0; ri < 24; ri++) {
-  var ra = (ri / 24) * Math.PI * 2;
-  var rr = rng(28, 45), rx = Math.cos(ra)*rr, rz = Math.sin(ra)*rr;
-  if (Math.abs(rz) < RIVER_W+10 && Math.abs(rx) < 130) continue;
-  var rh = rng(5, 9), rw = rng(2.8, 4.5);
-  mkBox(rw, rh, rw*1.2, MAT.brownB, rx, rh/2, rz, rng(-0.15,0.15), G.buildings, 'Mid-ring Brownstone\n5-8 story high-density residential\nGround floor: cafe or retail');
-  mkBox(rw+0.3, 0.4, rw*1.2+0.3, MAT.brownRoof, rx, rh+0.2, rz, 0, G.buildings, null);
-}
-
-// Skyscrapers - 4 rings
-var towerRings = [
-  { r: 38, count: 10, minH: 22, maxH: 45 },
-  { r: 58, count: 14, minH: 18, maxH: 40 },
-  { r: 78, count: 16, minH: 14, maxH: 32 },
-  { r: 95, count: 12, minH: 10, maxH: 24 },
-];
-for (var tri = 0; tri < towerRings.length; tri++) {
-  var ring = towerRings[tri];
-  for (var ti = 0; ti < ring.count; ti++) {
-    var ta = (ti / ring.count) * Math.PI * 2 + rng(-0.1, 0.1);
-    var tx2 = Math.cos(ta)*ring.r + rng(-3,3);
-    var tz2 = Math.sin(ta)*ring.r + rng(-3,3);
-    if (Math.abs(tz2) < RIVER_W+14 && Math.abs(tx2) < 130) continue;
-    if (Math.sqrt(tx2*tx2+tz2*tz2) < INNER_R+5) continue;
-    var th2 = rng(ring.minH, ring.maxH);
-    var tw2 = rng(3.5, 6);
-    var skyMats = [MAT.skyA, MAT.skyB, MAT.skyGlass];
-    var sm = skyMats[Math.floor(Math.random()*3)];
-    mkBox(tw2, th2, tw2, sm, tx2, th2/2, tz2, rng(-0.05,0.05), G.buildings,
-      'Apartment Tower\nHeight: ~'+Math.round(th2*2.5)+'m\n'+Math.round(th2/3)+' floors\nResidents: ~'+Math.round(th2*80)+'\nGreen roof + solar');
-    mkBox(tw2+0.5, 0.35, tw2+0.5, MAT.grass, tx2, th2*0.55, tz2, 0, G.buildings, 'Green setback terrace');
-    mkBox(tw2+0.5, 0.35, tw2+0.5, MAT.grass, tx2, th2*0.78, tz2, 0, G.buildings, 'Green setback terrace');
-    mkBox(tw2*0.85, 0.2, tw2*0.85, MAT.solar, tx2, th2+0.12, tz2, rng(0,0.5), G.solar, 'Rooftop Solar Array\nBuilding-integrated PV');
-  }
-}
-
-// Transit Stations
-var stations = [];
-stations.push([0, 0, 'Central Hub', 'Interchange: all 4 tram lines\nMetro + bus + bike share']);
-for (var si = 0; si < 8; si++) {
-  var sa = (si/8)*Math.PI*2;
-  stations.push([Math.cos(sa)*22, Math.sin(sa)*22, 'Inner Ring '+(si+1), 'Tram + bus\nBike share']);
-}
-for (var si = 0; si < 14; si++) {
-  var sa = (si/14)*Math.PI*2;
-  stations.push([Math.cos(sa)*46, Math.sin(sa)*46, 'Mid Ring '+(si+1), 'Tram + bus\nBike share + e-scooter']);
-}
-for (var si = 0; si < 18; si++) {
-  var sa = (si/18)*Math.PI*2;
-  stations.push([Math.cos(sa)*78, Math.sin(sa)*78, 'Outer Ring '+(si+1), 'Tram terminus\nPark and ride\nBike share']);
-}
-var riverStops = [-80, -50, -20, 10, 40, 70];
-for (var rsi = 0; rsi < riverStops.length; rsi++) {
-  stations.push([riverStops[rsi], RIVER_W+15, 'N River '+(rsi+1), 'Riverside tram\nFerry connection']);
-  stations.push([riverStops[rsi], -(RIVER_W+15), 'S River '+(rsi+1), 'Riverside tram\nFerry connection']);
-}
-stations.push([DAM_X+8, 0, 'Dam Station', 'Service + tourist tram\nHydro visitor center']);
-
-for (var sti = 0; sti < stations.length; sti++) {
-  var sx = stations[sti][0], sz = stations[sti][2+0-2+0];
-  var sname = stations[sti][2], sinfo = stations[sti][3];
-  sx = stations[sti][0]; var sz2 = stations[sti][1];
-  if (Math.sqrt(sx*sx + sz2*sz2) > CITY_R+5) continue;
-  mkBox(8, 0.3, 8, MAT.pedestrian, sx, 0.18, sz2, 0, G.transit, 'Transit Station: '+sname+'\n'+sinfo+'\nAll residents within 600m');
-  mkBox(9, 0.35, 9, MAT.transit, sx, 2.8, sz2, 0, G.transit, null);
-  var sps = [[-3,-3],[3,-3],[-3,3],[3,3]];
-  for (var spi = 0; spi < sps.length; spi++) {
-    mkBox(0.3, 2.8, 0.3, MAT.transitDark, sx+sps[spi][0], 1.4, sz2+sps[spi][1], 0, G.transit, null);
-  }
-  mkBox(7, 0.15, 7, MAT.solar, sx, 3.1, sz2, 0, G.solar, 'Station Solar Canopy: '+sname);
-}
-
-// Tram network
-mkTube([V3(-135,0.25,-(RIVER_W+12)), V3(0,0.25,-(RIVER_W+12)), V3(135,0.25,-(RIVER_W+12))], 0.45, MAT.transit, G.transit, 'Tram Line 1 — North Riverside');
-mkTube([V3(-135,0.25,RIVER_W+12), V3(0,0.25,RIVER_W+12), V3(135,0.25,RIVER_W+12)], 0.45, MAT.transit, G.transit, 'Tram Line 2 — South Riverside');
-mkTube([V3(-30,0.25,-CITY_R), V3(-30,0.25,0), V3(-30,0.25,CITY_R)], 0.45, MAT.transit, G.transit, 'Tram Line 3 — West N-S');
-mkTube([V3(30,0.25,-CITY_R), V3(30,0.25,0), V3(30,0.25,CITY_R)], 0.45, MAT.transit, G.transit, 'Tram Line 4 — East N-S');
-
-// Ring trams
-function makeRingTram(r, segs, mat, lbl) {
-  var pts = [];
-  for (var ri2 = 0; ri2 <= segs; ri2++) {
-    var ra2 = (ri2/segs)*Math.PI*2;
-    pts.push(V3(Math.cos(ra2)*r, 0.25, Math.sin(ra2)*r));
-  }
-  var c = new THREE.CatmullRomCurve3(pts, true);
-  var m2 = new THREE.Mesh(new THREE.TubeGeometry(c, segs*4, 0.4, 6, true), mat);
-  if (lbl) m2.userData.label = lbl;
-  G.transit.add(m2);
-}
-makeRingTram(22, 32, MAT.transit, 'Inner Ring Tram\n8 stations');
-makeRingTram(46, 64, MAT.transit, 'Mid Ring Tram\n14 stations');
-makeRingTram(78, 96, MAT.transit, 'Outer Ring Tram\n18 stations');
-
-// Spoke trams
-for (var spi2 = 0; spi2 < PETAL_N; spi2++) {
-  var spa = (spi2/PETAL_N)*Math.PI*2;
-  mkTube([V3(Math.cos(spa)*22,0.25,Math.sin(spa)*22), V3(Math.cos(spa)*78,0.25,Math.sin(spa)*78)], 0.38, MAT.transit, G.transit, 'Spoke Tram Line '+(spi2+1));
-}
-
-// Pedestrian boulevards
-for (var pbi = 0; pbi < PETAL_N; pbi++) {
-  var pba = (pbi/PETAL_N)*Math.PI*2;
-  mkTube([V3(0,0.16,0), V3(Math.cos(pba)*CITY_R,0.16,Math.sin(pba)*CITY_R)], 2.5, MAT.path, G.base, 'Pedestrian Boulevard\n20m wide\nBike lane + trees\nMax speed: 20 km/h');
-}
-
-// Bike network
-for (var bki = 0; bki < 12; bki++) {
-  var bka = (bki/12)*Math.PI*2 + 0.26;
-  mkTube([V3(0,0.17,0), V3(Math.cos(bka)*(CITY_R+5),0.17,Math.sin(bka)*(CITY_R+5))], 0.7, MAT.pathDark, G.transit, 'Bike Superhighway\nSeparated protected lane\nCopenhagen-style infrastructure');
-}
-
-// Parks
-for (var ring2 = 1; ring2 <= 3; ring2++) {
-  var pcount = ring2 * 6;
-  for (var ki = 0; ki < pcount; ki++) {
-    var ka = (ki/pcount)*Math.PI*2 + ring2*0.3;
-    var kr = ring2*30+10;
-    var kx = Math.cos(ka)*kr, kz2 = Math.sin(ka)*kr;
-    if (Math.abs(kz2) < RIVER_W+8 && Math.abs(kx) < 130) continue;
-    if (Math.sqrt(kx*kx+kz2*kz2) > CITY_R-5) continue;
-    var ks = 6 + ring2*2;
-    mkBox(ks*1.5, 0.1, ks*1.5, MAT.grass, kx, 0.08, kz2, 0, G.green, 'Neighborhood Park\nSize: ~'+Math.round(ks*15)+'m x '+Math.round(ks*15)+'m\nPlayground, sports, picnic');
-    for (var kt = 0; kt < Math.floor(ks*0.6); kt++) {
-      var ktx = kx+rng(-ks*0.6,ks*0.6), ktz = kz2+rng(-ks*0.6,ks*0.6);
-      var kth = rng(2,4);
-      mkCyl(0.18, 0.25, kth*0.5, 6, MAT.trunk, ktx, kth*0.25, ktz, G.green, null);
-      mkSphere(kth*0.45, 7, MAT.forest, ktx, kth*0.65, ktz, G.green, 'Park Tree');
+  // — Concentric ring roads (tube circles) —
+  [INNER_R, 44, 68, 92].forEach(function(R, ri) {
+    var N = 128, pts = [];
+    for (var i = 0; i <= N; i++) {
+      var a = (i / N) * Math.PI * 2;
+      pts.push(new THREE.Vector3(Math.cos(a) * R, roadY, Math.sin(a) * R));
     }
-  }
-}
+    var tubRad = [0.95, 0.85, 0.80, 0.70][ri];
+    var curve = new THREE.CatmullRomCurve3(pts, true);
+    var m = new THREE.Mesh(new THREE.TubeGeometry(curve, 512, tubRad, 6, true), roadMat);
+    m.receiveShadow = true;
+    roadsGrp.add(m);
+  });
 
-// Urban forests between petals
-for (var ufi = 0; ufi < PETAL_N; ufi++) {
-  var ufa = (ufi/PETAL_N)*Math.PI*2 + Math.PI/PETAL_N;
-  for (var ufr = 28; ufr < CITY_R-10; ufr += 9) {
-    for (var uda = -0.38; uda <= 0.38; uda += 0.14) {
-      var ufx = Math.cos(ufa+uda)*ufr + rng(-2,2);
-      var ufz = Math.sin(ufa+uda)*ufr + rng(-2,2);
-      if (Math.abs(ufz) < RIVER_W+6) continue;
-      if (Math.sqrt(ufx*ufx+ufz*ufz) > CITY_R) continue;
-      var uth = rng(2.5, 5.5);
-      var ufm = Math.random()>0.4 ? MAT.forest : MAT.forestDark;
-      mkCyl(0.22, 0.3, uth*0.5, 6, MAT.trunk, ufx, uth*0.25, ufz, G.green, null);
-      mkSphere(uth*0.48, 7, ufm, ufx, uth*0.68, ufz, G.green, 'Urban Forest\nCarbon sequestration\nShade corridor');
-    }
-  }
-}
+  // — 6 radial spokes at inter-petal angles: 30, 90, 150, 210, 270, 330 deg —
+  // (offset from petal axes so they run through the green corridors, not the river)
+  [1, 3, 5, 7, 9, 11].forEach(function(n) {
+    var a = n * Math.PI / 6;
+    var R1 = INNER_R, R2 = CITY_R - 4;
+    var len = R2 - R1;
+    var m = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.12, len), roadMat);
+    m.position.set(Math.cos(a) * (R1 + R2) / 2, roadY, Math.sin(a) * (R1 + R2) / 2);
+    m.rotation.y = Math.PI / 2 - a;
+    m.receiveShadow = true;
+    roadsGrp.add(m);
+  });
 
-// Community gardens
-var gardenLocs = [
-  [30,-45],[-30,-45],[55,-30],[-55,-30],
-  [30,45],[-30,45],[55,30],[-55,30],
-  [75,-15],[-75,-15],[75,15],[-75,15],
-  [40,-70],[-40,-70],[40,70],[-40,70],
-  [20,-90],[-20,-90],[20,90],[-20,90],
-  [65,-60],[-65,-60],[65,60],[-65,60]
-];
-for (var gli = 0; gli < gardenLocs.length; gli++) {
-  var glx = gardenLocs[gli][0], glz = gardenLocs[gli][1];
-  if (Math.sqrt(glx*glx+glz*glz) > CITY_R-3) continue;
-  mkBox(12,0.2,12, MAT.garden, glx, 0.12, glz, 0, G.green, 'Community Garden\nResident allotments\nComposting on-site\nFresh produce for residents');
-  for (var gr = -4; gr <= 4; gr += 2) {
-    mkBox(0.6, 0.35, 10, MAT.darkGrass, glx+gr, 0.38, glz, 0, G.green, 'Garden Bed');
-  }
-}
+  // — Petal-arc connectors between adjacent spokes —
+  // Arc outward between each pair of adjacent spokes at two mid-ring levels,
+  // creating convex petal shapes visible from above.
+  var spokeBase = [1, 3, 5, 7, 9, 11].map(function(n) { return n * Math.PI / 6; });
+  [44, 68].forEach(function(R, li) {
+    var bulgeAmt = [0.20, 0.16][li];
+    spokeBase.forEach(function(a1) {
+      var a2 = a1 + Math.PI / 3; // next spoke, 60° ahead (no wrap issues)
+      var pts = [];
+      for (var i = 0; i <= 20; i++) {
+        var t = i / 20;
+        var ang = a1 + t * (a2 - a1);
+        var r = R * (1 + bulgeAmt * Math.sin(t * Math.PI)); // bow outward at midpoint
+        pts.push(new THREE.Vector3(Math.cos(ang) * r, roadY, Math.sin(ang) * r));
+      }
+      var curve = new THREE.CatmullRomCurve3(pts);
+      var m = new THREE.Mesh(new THREE.TubeGeometry(curve, 80, 0.75, 5, false), roadMat);
+      m.receiveShadow = true;
+      roadsGrp.add(m);
+    });
+  });
 
-// Solar farms (peripheral)
-var solarLocs = [
-  [-95,-50,0.2],[95,-50,-0.2],[-95,50,0.1],[95,50,-0.1],
-  [-110,20,0.3],[110,20,-0.3],[-110,-20,0.15],[110,-20,-0.15],
-  [0,-105,0],[0,105,0],[-60,-95,0.1],[60,-95,-0.1],[-60,95,0.1],[60,95,-0.1]
-];
-for (var sli = 0; sli < solarLocs.length; sli++) {
-  var slx = solarLocs[sli][0], slz = solarLocs[sli][1], slry = solarLocs[sli][2];
-  if (Math.sqrt(slx*slx+slz*slz) > CITY_R+18) continue;
-  for (var slr = 0; slr < 5; slr++) {
-    for (var slc = 0; slc < 7; slc++) {
-      var spx = slx+slr*3.5-7, spz = slz+slc*2.8-8.4;
-      var sp = mkBox(3,0.12,1.6, MAT.solar, spx, 0.9, spz, slry, G.solar, 'Solar Farm Panel\nUtility-scale PV\nCity total: ~2.4 GW');
-      sp.rotation.x = -0.38;
-    }
+  // — Inner chord connectors at the inner ring —
+  // Short straight roads connecting adjacent spoke roots to form a hexagonal core.
+  spokeBase.forEach(function(a1) {
+    var a2 = a1 + Math.PI / 3;
+    var R = INNER_R;
+    var p1x = Math.cos(a1) * R, p1z = Math.sin(a1) * R;
+    var p2x = Math.cos(a2) * R, p2z = Math.sin(a2) * R;
+    var cx = (p1x + p2x) / 2, cz = (p1z + p2z) / 2;
+    var cLen = Math.sqrt(Math.pow(p2x-p1x,2) + Math.pow(p2z-p1z,2));
+    var cAngle = Math.atan2(p2z - p1z, p2x - p1x);
+    var m = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.12, cLen), roadMat);
+    m.position.set(cx, roadY, cz);
+    m.rotation.y = Math.PI / 2 - cAngle;
+    m.receiveShadow = true;
+    roadsGrp.add(m);
+  });
+})();
+
+// Bridge ramps
+(function() {
+  var rampTopY  = 1.4;                                          // bridge deck top (y=1.0 + h/2=0.4)
+  var rampGndY  = 0.235;                                        // promenade top (y=0.16 + h/2=0.075)
+  var rampNearZ = RIVER_W * 1.2;                                // bridge end edge
+  var rampFarZ  = RIVER_W + 8.5;                                // promenade inner edge
+  var rampHLen  = rampFarZ - rampNearZ;                         // horizontal span
+  var rampMidZ  = (rampNearZ + rampFarZ) / 2;
+  var rampMidY  = (rampTopY + rampGndY) / 2;
+  var rampDrop  = rampTopY - rampGndY;
+  var rampAngle = Math.atan2(rampDrop, rampHLen);
+  var rampSLen  = Math.sqrt(rampHLen * rampHLen + rampDrop * rampDrop);
+  var rampGeo   = new THREE.BoxGeometry(5, 0.15, rampSLen);
+  for (var rbi = 0; rbi < bridgeXs.length; rbi++) {
+    var rbx = bridgeXs[rbi];
+    var ms = new THREE.Mesh(rampGeo, MAT.pedestrian);
+    ms.rotation.x = rampAngle;
+    ms.position.set(rbx, rampMidY, rampMidZ);
+    ms.castShadow = true; ms.receiveShadow = true;
+    G.base.add(ms);
+    var mn = new THREE.Mesh(rampGeo, MAT.pedestrian);
+    mn.rotation.x = -rampAngle;
+    mn.position.set(rbx, rampMidY, -rampMidZ);
+    mn.castShadow = true; mn.receiveShadow = true;
+    G.base.add(mn);
   }
-}
+})();
 
 // Orbit controls
 var dragging = false, rightDrag = false;
